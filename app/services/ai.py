@@ -18,8 +18,23 @@ class AIError(Exception):
     pass
 
 
+def normalize_model(provider: str, model: str = "") -> str:
+    """Ensure a valid model name is used; sanitize Google Cloud project IDs if mistakenly entered."""
+    m = (model or "").strip()
+    if provider == "gemini":
+        if not m or "gen-lang-client" in m or not m.startswith("gemini"):
+            return "gemini-2.0-flash"
+    elif provider == "claude":
+        if not m or not m.startswith("claude"):
+            return "claude-haiku-4-5"
+    elif provider == "openai":
+        if not m or not (m.startswith("gpt-") or m.startswith("o")):
+            return "gpt-4o-mini"
+    return m or PROVIDERS.get(provider, {}).get("model", "")
+
+
 def _complete(provider: str, model: str, key: str, prompt: str, max_tokens: int = 700) -> str:
-    model = model or PROVIDERS[provider]["model"]
+    model = normalize_model(provider, model)
     try:
         if provider == "gemini":
             r = requests.post(f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
@@ -124,7 +139,7 @@ def search_leads_with_ai(org, keyword: str, country: str, city: str = "", compan
         raise AIError("Add your AI key in Settings > AI first.")
 
     provider = org["ai_provider"]
-    model = org["ai_model"] or PROVIDERS[provider]["model"]
+    model = normalize_model(provider, org["ai_model"])
     limit = max(5, min(target, 40))
 
     prompt = (

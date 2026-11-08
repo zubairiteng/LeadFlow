@@ -39,6 +39,7 @@ def settings_ai():
         if provider not in ai.PROVIDERS:
             flash("Choose a provider.", "error")
             return redirect(url_for("main.settings_ai"))
+        model = ai.normalize_model(provider, model)
         if key:
             d.x("UPDATE orgs SET ai_key_enc=? WHERE id=?", (crypto.encrypt(key), o["id"]))
         d.x("UPDATE orgs SET ai_provider=?, ai_model=? WHERE id=?", (provider, model, o["id"]))
@@ -51,7 +52,9 @@ def settings_ai():
         else:
             flash("AI settings saved.", "ok")
         return redirect(url_for("main.settings_ai"))
-    return render_template("settings_ai.html", providers=ai.PROVIDERS, masked=crypto.mask(crypto.decrypt(o["ai_key_enc"])))
+    default_model = ai.normalize_model(o["ai_provider"] or "gemini", o["ai_model"])
+    return render_template("settings_ai.html", providers=ai.PROVIDERS, default_model=default_model,
+                           masked=crypto.mask(crypto.decrypt(o["ai_key_enc"])))
 
 
 # ------------------------------------------------------------------ Email
