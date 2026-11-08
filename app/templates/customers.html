@@ -1,0 +1,27 @@
+{% extends 'base.html' %}{% import '_m.html' as m with context %}{% block title %}Customers{% endblock %}{% block body %}
+<p><a href="{{ url_for('main.campaign', cid=c.id) }}">← {{ c.name }}</a></p>
+<div class="row sp"><div><h1>Customer list</h1><p class="sub">{{ total }} customers. Review, add and remove before you create a round.</p></div>
+<a class="btn" href="{{ url_for('main.customers_export', cid=c.id, **args.to_dict()) }}">Export CSV</a></div>
+<form class="card row" method="get"><input type="text" name="q" value="{{ args.get('q','') }}" placeholder="Search name, website, email" style="max-width:260px">
+<select name="grade" style="width:auto"><option value="">All grades</option>{% for x in ['Hot','Warm','Cold'] %}<option {{ 'selected' if args.get('grade')==x }}>{{ x }}</option>{% endfor %}</select>
+<select name="email_status" style="width:auto"><option value="">Any email status</option>{% for x in ['Unverified','Verified','Risky','Invalid','None'] %}<option {{ 'selected' if args.get('email_status')==x }}>{{ x }}</option>{% endfor %}</select>
+<select name="country" style="width:auto"><option value="">All countries</option>{% for x in countries %}<option {{ 'selected' if args.get('country')==x }}>{{ x }}</option>{% endfor %}</select>
+<select name="source" style="width:auto"><option value="">All sources</option>{% for x in sources %}<option {{ 'selected' if args.get('source')==x }}>{{ x }}</option>{% endfor %}</select>
+<button class="btn p">Filter</button><a class="btn" href="{{ url_for('main.customers', cid=c.id) }}">Reset</a></form>
+<div class="card tw">{% if rows %}<table><tr><th>Company</th><th>Email</th><th>Grade</th><th>Score</th><th>Country</th><th>Source</th><th></th></tr>
+{% for r in rows %}<tr><td><a href="{{ url_for('main.customer_view', cid=r.id) }}"><b>{{ r.company_name }}</b></a><div class="mute small">{{ r.domain }}</div></td>
+<td>{{ r.email or '—' }} {% if r.email %}{{ m.estatus(r.email_status) }}{% endif %}{% if r.email and r.email in dnc %} <span class="badge b-bad">DNC</span>{% endif %}{% if r.enrich_state=='pending' %} <span class="badge b-mute">finding email…</span>{% endif %}</td>
+<td>{{ m.grade(r.grade) }}</td><td>{{ r.score }}</td><td>{{ r.country }}</td><td class="small mute">{{ r.source }}</td>
+<td><form method="post" action="{{ url_for('main.customer_exclude', cid=r.id) }}" data-confirm="Exclude {{ r.company_name }} permanently? The bot will never add it again.">{{ m.csrf() }}<input type="hidden" name="next" value="{{ request.full_path }}"><button class="btn s d">Exclude</button></form></td></tr>{% endfor %}</table>
+{{ m.pager(page,pages,args) }}{% else %}<div class="empty">No customers match. Run a search, add one below, or upload a file.</div>{% endif %}</div>
+<div class="grid g2" style="align-items:start">
+<div class="card" id="add"><h2>Add a customer</h2><form method="post" action="{{ url_for('main.customer_add', cid=c.id) }}">{{ m.csrf() }}
+<div class="grid g2"><div><label>Company name</label><input type="text" name="company_name" required></div><div><label>Website</label><input type="text" name="website" placeholder="example.com"></div>
+<div><label>Email</label><input type="email" name="email"></div><div><label>Phone</label><input type="text" name="phone"></div>
+<div><label>Country</label><input type="text" name="country"></div><div><label>City</label><input type="text" name="city"></div></div>
+<label>Contact name</label><input type="text" name="contact_name"><p class="hint">Website or email is required. Duplicates and Excluded customers are checked automatically.</p>
+<p><button class="btn p">Add customer</button></p></form></div>
+<div class="card" id="upload"><h2>Upload CSV or Excel</h2><form method="post" enctype="multipart/form-data" action="{{ url_for('main.customer_upload', cid=c.id) }}">{{ m.csrf() }}
+<input type="file" name="file" accept=".csv,.xlsx" required><p class="hint">First row = headers. Recognised: company, website, email, phone, country, city, contact. Max 5000 rows. Every row goes through the same duplicate / excluded checks.</p>
+<p><button class="btn p">Upload</button></p></form></div></div>
+{% endblock %}

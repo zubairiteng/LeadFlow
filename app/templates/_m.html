@@ -1,0 +1,9 @@
+{% macro csrf() %}<input type="hidden" name="_csrf" value="{{ csrf_token }}">{% endmacro %}
+{% macro grade(g) %}<span class="badge b-{{ g|lower }}">{{ g }}</span>{% endmacro %}
+{% macro estatus(s) %}<span class="badge {{ {'Unverified':'b-warn','Verified':'b-ok','Risky':'b-warn','Invalid':'b-bad','None':'b-mute'}.get(s,'') }}">{{ s }}</span>{% endmacro %}
+{% macro rstatus(s) %}<span class="badge {{ {'Pending':'b-mute','Sent':'','Replied':'b-ok','Ignored':'b-warn','Bounced':'b-bad','Unsubscribed':'b-bad','Skipped':'b-mute','Draft':'b-mute','Approved':'b-ok','Sending':'','Paused':'b-warn','Finished':'b-ok','Queued':'b-mute','Running':'','Completed':'b-ok','Completed with Shortfall':'b-warn','Failed':'b-bad','Cancelled':'b-mute'}.get(s,'') }}">{{ s }}</span>{% endmacro %}
+{% macro pager(page,pages,args) %}{% if pages>1 %}<div class="pager">
+{% set a = args.to_dict() if args.to_dict is defined else args %}
+{% if page>1 %}<a class="btn s" href="?{{ (a|dictupdate({'page':page-1}))|urlencode }}">‹ Prev</a>{% endif %}
+<span class="mute small" style="padding:6px">Page {{ page }} / {{ pages }}</span>
+{% if page<pages %}<a class="btn s" href="?{{ (a|dictupdate({'page':page+1}))|urlencode }}">Next ›</a>{% endif %}</div>{% endif %}{% endmacro %}

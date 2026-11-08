@@ -1,0 +1,10 @@
+{% extends 'base.html' %}{% import '_m.html' as m with context %}{% block title %}Users{% endblock %}{% block body %}
+<h1>Users</h1><p class="sub"><b>Admin</b>: settings and users · <b>Manager</b>: approves rounds · <b>Researcher</b>: searches and customer lists, cannot approve or send.</p>
+<div class="card tw"><table><tr><th>User</th><th>Role</th><th>Status</th><th></th></tr>{% for u in users %}<tr><td><b>{{ u.name or u.email }}</b><div class="mute small">{{ u.email }}</div></td>
+<td><form method="post" class="row">{{ m.csrf() }}<input type="hidden" name="action" value="role"><input type="hidden" name="user_id" value="{{ u.id }}"><select name="role" style="width:auto" onchange="this.form.submit()" {{ 'disabled' if u.id==me.id }}>{% for r in ['admin','manager','researcher'] %}<option {{ 'selected' if u.role==r }}>{{ r }}</option>{% endfor %}</select></form></td>
+<td>{{ m.rstatus('Approved') if u.active else m.rstatus('Cancelled') }} {{ 'active' if u.active else 'disabled' }}</td>
+<td>{% if u.id!=me.id %}<form method="post">{{ m.csrf() }}<input type="hidden" name="action" value="deactivate"><input type="hidden" name="user_id" value="{{ u.id }}"><button class="btn s">{{ 'Disable' if u.active else 'Enable' }}</button></form>{% endif %}</td></tr>{% endfor %}</table></div>
+<div class="card" style="max-width:560px"><h2>Add user</h2><form method="post">{{ m.csrf() }}<input type="hidden" name="action" value="add">
+<div class="grid g2"><div><label>Name</label><input type="text" name="name"></div><div><label>Email</label><input type="email" name="email" required></div>
+<div><label>Role</label><select name="role"><option>researcher</option><option>manager</option><option>admin</option></select></div><div><label>Temporary password</label><input type="password" name="password" minlength="8" required autocomplete="new-password"></div></div>
+<p><button class="btn p">Add user</button></p></form></div>{% endblock %}

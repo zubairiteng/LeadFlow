@@ -1,0 +1,25 @@
+{% extends 'base.html' %}{% import '_m.html' as m with context %}{% block title %}New round{% endblock %}{% block body %}
+<p><a href="{{ url_for('main.campaign', cid=c.id) }}">← {{ c.name }}</a></p>
+<h1>New round</h1><p class="sub">Nothing is sent until a manager approves it.</p>
+<form method="post" class="grid g2" style="align-items:start">{{ m.csrf() }}
+<div class="card"><h2>1. Email</h2>
+{% if org.ai_provider %}<div class="row" style="margin-bottom:8px"><input type="text" id="ai_instr" placeholder="Optional: tell the AI what to stress" style="flex:1"><button type="button" class="btn" id="ai_btn">✨ Draft with AI</button></div><div class="hint" id="ai_msg"></div>{% else %}<p class="hint">Tip: add your AI key in Settings to get draft emails.</p>{% endif %}
+{% include '_round_form.html' %}</div>
+<div class="card"><h2>2. Audience</h2>
+<label>Who gets this round</label><select name="mode" id="mode">
+<option value="all" {{ 'selected' if f.get('mode')=='all' }}>All eligible customers</option>
+<option value="new" {{ 'selected' if f.get('mode')=='new' }}>Only customers not contacted yet</option>
+{% if prev_rounds %}<option value="ignored" {{ 'selected' if f.get('mode')=='ignored' }}>Customers who Ignored an earlier round</option>{% endif %}
+<option value="manual" {{ 'selected' if f.get('mode')=='manual' }}>Hand-pick (choose on the next page)</option></select>
+<div id="prev" {% if f.get('mode')!='ignored' %}style="display:none"{% endif %}><label>Earlier round</label><select name="prev_round_id">{% for r in prev_rounds %}<option value="{{ r.id }}">{{ r.name or ('Round '~r.number) }}</option>{% endfor %}</select></div>
+<label>Grades</label><div class="row">{% for gr in grades %}<label class="chk"><input type="checkbox" name="grades" value="{{ gr }}" {{ 'checked' if gr in sel_grades }}> {{ gr }}</label>{% endfor %}</div>
+<label>Email status</label><div class="row">{% for s in statuses %}<label class="chk"><input type="checkbox" name="statuses" value="{{ s }}" {{ 'checked' if s in sel_statuses }}> {{ s }}</label>{% endfor %}</div>
+<p class="hint">Always removed automatically: unsubscribed, bounced, invalid emails, customers who already replied, and Excluded customers.</p>
+<p><button class="btn p">Create draft round</button></p></div></form>
+<script>
+const mode=document.getElementById('mode');mode.addEventListener('change',()=>{document.getElementById('prev').style.display=mode.value==='ignored'?'block':'none'});
+const b=document.getElementById('ai_btn');if(b){b.onclick=async()=>{const msg=document.getElementById('ai_msg');msg.textContent='Writing…';
+try{const r=await fetch("{{ url_for('main.ai_draft', cid=c.id) }}",{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':"{{ csrf_token }}"},body:JSON.stringify({instructions:document.getElementById('ai_instr').value})});
+const j=await r.json();if(!r.ok){msg.textContent=j.error||'Failed';return}
+if(j.subject)document.getElementById('subject').value=j.subject;document.getElementById('body').value=j.body;msg.textContent='Draft inserted. Please review and edit.'}catch(e){msg.textContent='Network error'}}}
+</script>{% endblock %}

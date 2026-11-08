@@ -1,0 +1,10 @@
+{# Shared email content fields. Expects f (dict-like). #}
+<label>Round name <span class="mute">(optional)</span></label><input type="text" name="name" value="{{ f.get('name','') }}" maxlength="100" placeholder="Round 1 – Intro">
+<label>Subject</label><input type="text" name="subject" id="subject" value="{{ f.get('subject','') }}" maxlength="200" required>
+<label>Email text</label><textarea name="body" id="body" required>{{ f.get('body','') }}</textarea>
+<p class="hint">Placeholders: <span class="mono">{{ '{{first_name}} {{company_name}} {{contact_name}} {{city}} {{country}} {{website}}' }}</span>. Your signature, postal address and the unsubscribe link are added automatically.</p>
+<div class="grid g2"><div><label>Follow-up days</label><input type="text" name="followup_days" value="{{ f.get('followup_days','3,7') }}" placeholder="3,7"><p class="hint">Days after the first email, only if no reply. Empty = no follow-ups.</p></div>
+<div><label>Mark “Ignored” after (days)</label><input type="number" name="ignore_after_days" value="{{ f.get('ignore_after_days','3') }}" min="1" max="60"><p class="hint">After the last email with no reply.</p></div></div>
+<label>Follow-up texts <span class="mute">(separate with a line containing ---)</span></label><textarea name="followup_bodies" style="min-height:110px">{{ f.get('followup_bodies','') }}</textarea>
+<div class="grid g2"><div><label>Round daily limit <span class="mute">(optional)</span></label><input type="number" name="daily_limit" value="{{ f.get('daily_limit') or '' }}" min="1" max="100"></div>
+<div><label>Start date <span class="mute">(optional)</span></label><input type="date" name="start_date" value="{{ f.get('start_date') or '' }}"></div></div>

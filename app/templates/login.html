@@ -1,0 +1,9 @@
+{% extends 'base.html' %}{% block title %}Log in{% endblock %}{% block body %}
+<div class="brand" style="color:var(--ink);justify-content:center;font-size:22px"><i></i> LeadFlow</div>
+<div class="card"><h2>Log in</h2>
+<form method="post">{% import '_m.html' as m with context %}{{ m.csrf() }}
+<label for="email">Email</label><input id="email" type="email" name="email" required autofocus autocomplete="username">
+<label for="pw">Password</label><input id="pw" type="password" name="password" required autocomplete="current-password">
+<p><button class="btn p" style="width:100%">Log in</button></p></form></div>
+{% if config.ALLOW_SIGNUP %}<p class="mute small" style="text-align:center">New here? <a href="{{ url_for('main.signup') }}">Create an account</a></p>{% endif %}
+{% endblock %}

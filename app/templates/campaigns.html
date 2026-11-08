@@ -1,0 +1,11 @@
+{% extends 'base.html' %}{% import '_m.html' as m with context %}{% block title %}Campaigns{% endblock %}{% block body %}
+<h1>Campaigns</h1><p class="sub">A campaign holds your search, customer list and email rounds (e.g. “TPR Gloves USA”).</p>
+<div class="grid g2" style="align-items:start">
+<div class="card"><h2>New campaign</h2><form method="post" action="{{ url_for('main.campaign_new') }}">{{ m.csrf() }}
+<label>Name</label><input type="text" name="name" required maxlength="120" placeholder="TPR Gloves USA">
+<label>Product / service</label><input type="text" name="product" maxlength="300" placeholder="Industrial gloves, TPR coated">
+<label>Target market</label><input type="text" name="target_market" maxlength="300" placeholder="Safety-equipment distributors in the USA">
+<p><button class="btn p">Create campaign</button></p></form></div>
+<div class="card"><h2>Your campaigns</h2>{% if rows %}<table><tr><th>Name</th><th>Customers</th><th>Rounds</th></tr>
+{% for r in rows %}<tr><td><a href="{{ url_for('main.campaign', cid=r.id) }}"><b>{{ r.name }}</b></a><div class="mute small">{{ r.product }}</div></td><td>{{ r.n }}</td><td>{{ r.rounds }}</td></tr>{% endfor %}</table>
+{% else %}<div class="empty">Nothing here yet.</div>{% endif %}</div></div>{% endblock %}

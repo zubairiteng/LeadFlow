@@ -1,0 +1,9 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Subscribe · {{ org.name }}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head><body style="background:transparent"><div class="auth" style="margin:12px auto">
+<div class="card">{% if done %}<h2>Thank you!</h2><p class="mute">You are subscribed to updates from {{ org.name }}. You can unsubscribe at any time using the link in every email.</p>
+{% else %}<h2>Stay in touch with {{ org.name }}</h2>{% if error %}<div class="flash error">{{ error }}</div>{% endif %}
+<form method="post" action="{{ url_for('main.subscribe_post', key=key, cid=cid) }}">
+<label>Email *</label><input type="email" name="email" required><label>Your name</label><input type="text" name="name"><label>Company</label><input type="text" name="company_name">
+<div style="position:absolute;left:-9999px" aria-hidden="true"><input type="text" name="website_hp" tabindex="-1" autocomplete="off"></div>
+<label class="chk" style="margin-top:14px"><input type="checkbox" name="consent" value="1" required> I agree to receive emails from {{ org.name }}.</label>
+<p><button class="btn p" style="width:100%">Subscribe</button></p></form>{% endif %}</div></div></body></html>

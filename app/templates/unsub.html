@@ -1,0 +1,7 @@
+{% extends 'base.html' %}{% block title %}Unsubscribe{% endblock %}{% block body %}
+<div class="card" style="text-align:center;margin-top:6vh">
+{% if state=='confirm' %}<h2>Unsubscribing…</h2><p class="mute">One moment.</p>
+<form method="post" id="f"><noscript><p>Click to confirm:</p><button class="btn p">Unsubscribe me</button></noscript></form><script>document.getElementById('f').submit()</script>
+{% elif state=='done' %}<h2>You have been unsubscribed</h2><p class="mute">You will not receive any more emails from us.</p>
+{% elif state=='test' %}<h2>This is a test email</h2><p class="mute">In a real email this link unsubscribes the recipient immediately.</p>
+{% else %}<h2>This link is not valid</h2><p class="mute">It may have been copied incorrectly.</p>{% endif %}</div>{% endblock %}

@@ -1,0 +1,7 @@
+{% extends 'base.html' %}{% import '_m.html' as m with context %}{% block title %}Needs reply{% endblock %}{% block body %}
+<h1>Needs reply</h1><p class="sub">Customers who replied and are waiting for a human answer. Reply from your own mailbox, then mark done.</p>
+<div class="card tw">{% if rows %}<table><tr><th>Customer</th><th>Their reply</th><th>Round</th><th>When</th><th></th></tr>
+{% for t in rows %}<tr><td><a href="{{ url_for('main.customer_view', cid=t.customer_id) }}"><b>{{ t.company_name }}</b></a><div class="mute small">{{ t.email }}</div></td><td style="max-width:420px">{{ t.note }}</td>
+<td class="small">{{ t.cname }} · R{{ t.rnum }}</td><td class="small mute">{{ fmt(t.created_at) }}</td>
+<td>{% if t.status=='Open' %}<form method="post" action="{{ url_for('main.task_done', tid=t.id) }}">{{ m.csrf() }}<button class="btn s">Mark done</button></form>{% else %}<span class="badge b-ok">Done</span>{% endif %}</td></tr>{% endfor %}</table>
+{% else %}<div class="empty">No replies yet.</div>{% endif %}</div>{% endblock %}

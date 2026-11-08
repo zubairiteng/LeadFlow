@@ -1,0 +1,5 @@
+{% extends 'base.html' %}{% import '_m.html' as m with context %}{% block title %}Do-not-contact{% endblock %}{% block body %}
+<h1>Do-not-contact list</h1><p class="sub">Unsubscribed and bounced addresses. Applies to every campaign and round, and is re-checked before each email.</p>
+<form class="card row" method="post">{{ m.csrf() }}<input type="email" name="email" placeholder="Add an email manually" style="max-width:320px" required><button class="btn p">Add</button></form>
+<div class="card tw">{% if rows %}<table><tr><th>Email</th><th>Reason</th><th>Added</th><th></th></tr>{% for r in rows %}<tr><td>{{ r.email }}</td><td><span class="badge {{ 'b-bad' if r.reason=='bounced' else 'b-warn' }}">{{ r.reason }}</span></td><td>{{ fmt(r.created_at) }}</td>
+<td>{% if me.role!='researcher' and r.reason!='bounced' %}<form method="post" action="{{ url_for('main.dnc_remove', did=r.id) }}" data-confirm="Only remove if the person asked to be contacted again. Continue?">{{ m.csrf() }}<button class="btn s">Remove</button></form>{% endif %}</td></tr>{% endfor %}</table>{% else %}<div class="empty">Empty.</div>{% endif %}</div>{% endblock %}

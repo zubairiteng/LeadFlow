@@ -1,0 +1,20 @@
+{% extends 'base.html' %}{% import '_m.html' as m with context %}{% block title %}Email settings{% endblock %}{% block body %}
+<h1>Email connection</h1><p class="sub">Choose how LeadFlow sends and reads replies. Status: <b>{{ {'none':'Not connected','demo':'Demo mode','gmail':'Gmail (Google login)','smtp':'SMTP / IMAP'}[org.email_mode] }}</b> {% if org.email_address %}· {{ org.email_address }}{% endif %}</p>
+{% if org.last_error %}<div class="warn">{{ org.last_error }}</div>{% endif %}
+<div class="grid g2" style="align-items:start">
+<div class="card"><h2>Option A · Connect with Gmail</h2>
+{% if gmail_ready %}<p class="small">Sign in with Google and press Allow. Use a separate Gmail for outreach, not your main business Gmail.</p><a class="btn p" href="{{ url_for('main.google_start') }}">Connect with Gmail</a>
+{% else %}<p class="small mute">Not configured on this server. The developer sets <span class="mono">GOOGLE_CLIENT_ID</span> and <span class="mono">GOOGLE_CLIENT_SECRET</span> once (see README). Redirect URL to register:</p><input type="text" readonly value="{{ redirect_uri }}" onclick="this.select()">{% endif %}
+<p class="hint">Until Google approves the app, users see an “unverified app” warning and must reconnect about every 7 days.</p></div>
+<div class="card"><h2>Option B · Gmail App Password / any SMTP</h2><form method="post">{{ m.csrf() }}
+<label>Sender email</label><input type="email" name="email_address" value="{{ org.email_address if org.email_mode=='smtp' else '' }}" required placeholder="outreach@gmail.com">
+<div class="grid g2"><div><label>SMTP host</label><input type="text" name="smtp_host" value="{{ org.smtp_host or 'smtp.gmail.com' }}"></div><div><label>SMTP port</label><input type="number" name="smtp_port" value="{{ org.smtp_port or 587 }}"></div>
+<div><label>IMAP host (reads replies)</label><input type="text" name="imap_host" value="{{ org.imap_host or 'imap.gmail.com' }}"></div><div><label>IMAP port</label><input type="number" name="imap_port" value="{{ org.imap_port or 993 }}"></div></div>
+<label>Username <span class="mute">(blank = sender email)</span></label><input type="text" name="smtp_user" value="{{ org.smtp_user }}">
+<label>Password / App Password</label><input type="password" name="smtp_pass" placeholder="{{ '•••••••• saved' if has_pw else '' }}" autocomplete="new-password">
+<p class="hint">Gmail: turn on 2-Step Verification, then create an App Password at myaccount.google.com/apppasswords. No Google approval needed.</p>
+<button class="btn p" name="action" value="smtp_save">Test and save</button></form></div></div>
+<div class="grid g2"><div class="card"><h2>Demo mode</h2><p class="small">Nothing is really sent. Perfect for showing clients the full flow: approval, sending, follow-ups, replies and bounces.</p>
+<form method="post">{{ m.csrf() }}<button class="btn" name="action" value="demo">Use demo mode</button></form></div>
+{% if org.email_mode!='none' %}<div class="card"><h2>Disconnect</h2><p class="small">Stops all sending immediately.</p><form method="post" data-confirm="Disconnect email?">{{ m.csrf() }}<button class="btn d" name="action" value="disconnect">Disconnect</button></form></div>{% endif %}</div>
+{% endblock %}

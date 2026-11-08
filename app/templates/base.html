@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block title %}{{ page_title|default('LeadFlow') }}{% endblock %} · LeadFlow</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234f46e5'/%3E%3C/svg%3E">
+</head><body>
+{% if me %}
+<div class="layout">
+<aside class="side">
+  <div class="brand"><i></i> LeadFlow</div>
+  <nav>
+    <a href="{{ url_for('main.dashboard') }}" class="{{ 'on' if request.endpoint=='main.dashboard' }}">Dashboard</a>
+    <a href="{{ url_for('main.campaigns') }}" class="{{ 'on' if request.endpoint in ('main.campaigns','main.campaign','main.customers','main.round_view','main.round_new','main.job_view') }}">Campaigns</a>
+    <a href="{{ url_for('main.tasks') }}" class="{{ 'on' if request.endpoint=='main.tasks' }}">Needs reply</a>
+    <div class="sec">Lists</div>
+    <a href="{{ url_for('main.excluded') }}" class="{{ 'on' if request.endpoint=='main.excluded' }}">Excluded</a>
+    <a href="{{ url_for('main.dnc_list') }}" class="{{ 'on' if request.endpoint=='main.dnc_list' }}">Do-not-contact</a>
+    {% if me.role=='admin' %}<div class="sec">Settings</div>
+    <a href="{{ url_for('main.settings_ai') }}" class="{{ 'on' if request.endpoint=='main.settings_ai' }}">AI key</a>
+    <a href="{{ url_for('main.settings_email') }}" class="{{ 'on' if request.endpoint=='main.settings_email' }}">Email</a>
+    <a href="{{ url_for('main.settings_sending') }}" class="{{ 'on' if request.endpoint=='main.settings_sending' }}">Sending rules</a>
+    <a href="{{ url_for('main.settings_users') }}" class="{{ 'on' if request.endpoint=='main.settings_users' }}">Users</a>{% endif %}
+  </nav>
+  <div class="who"><b>{{ me.name or me.email }}</b>{{ org.name }} · {{ me.role }}<br>
+    <a href="{{ url_for('main.account') }}" style="color:#a5b4fc">Account</a> ·
+    <form method="post" action="{{ url_for('main.logout') }}" style="display:inline"><input type="hidden" name="_csrf" value="{{ csrf_token }}"><button class="btn s" style="padding:0;border:0;background:none;color:#a5b4fc">Log out</button></form></div>
+</aside>
+<main class="main">
+{% else %}<div class="auth">{% endif %}
+{% with msgs = get_flashed_messages(with_categories=true) %}{% for cat, m in msgs %}<div class="flash {{ cat }}" role="alert">{{ m }}</div>{% endfor %}{% endwith %}
+{% block body %}{% endblock %}
+{% if me %}</main></div>{% else %}</div>{% endif %}
+<script>
+document.querySelectorAll('form[data-confirm]').forEach(f=>f.addEventListener('submit',e=>{if(!confirm(f.dataset.confirm))e.preventDefault()}));
+</script>
+</body></html>

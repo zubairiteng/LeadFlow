@@ -1,0 +1,45 @@
+{% extends 'base.html' %}{% import '_m.html' as m with context %}{% block title %}{{ c.name }}{% endblock %}{% block body %}
+<div class="row sp"><div><h1>{{ c.name }}</h1><p class="sub">{{ c.product }}{% if c.product and c.target_market %} · {% endif %}{{ c.target_market }}</p></div>
+<div class="row"><a class="btn" href="{{ url_for('main.customers', cid=c.id) }}">Customer list ({{ total }})</a>
+{% if me.role!='researcher' %}<a class="btn p" href="{{ url_for('main.round_new', cid=c.id) }}">+ New round</a>{% endif %}</div></div>
+
+<div class="grid g4" style="margin-bottom:18px">
+<div class="stat"><div class="n">{{ total }}</div><div class="l">Customers</div></div>
+<div class="stat"><div class="n">{{ grades.get('Hot',0) }}</div><div class="l">Hot</div></div>
+<div class="stat"><div class="n">{{ grades.get('Warm',0) }}</div><div class="l">Warm</div></div>
+<div class="stat"><div class="n">{{ with_email }}</div><div class="l">With usable email</div></div></div>
+
+<div class="card"><h2>Rounds</h2>
+{% if rounds %}<div class="tw"><table><tr><th>Round</th><th>Status</th><th>Selected</th><th>Sent</th><th>Bounced</th><th>Replied</th><th>Ignored</th><th>Unsub.</th><th>Reply rate</th></tr>
+{% for x in rounds %}<tr><td><a href="{{ url_for('main.round_view', rid=x.r.id) }}"><b>{{ x.r.name or ('Round '~x.r.number) }}</b></a></td><td>{{ m.rstatus(x.r.status) }}</td>
+<td>{{ x.s.selected }}</td><td>{{ x.s.sent }}</td><td>{{ x.s.bounced }}</td><td>{{ x.s.replied }}</td><td>{{ x.s.ignored }}</td><td>{{ x.s.unsubscribed }}</td><td><b>{{ x.s.reply_rate }}%</b></td></tr>{% endfor %}</table></div>
+{% else %}<div class="empty">No rounds yet. Find customers first, then create Round 1.</div>{% endif %}</div>
+
+<div class="grid g2" style="align-items:start">
+<div class="card"><h2>Find customers (Discovery Bot)</h2>
+<form method="post" action="{{ url_for('main.search_create', cid=c.id) }}">{{ m.csrf() }}
+<div class="grid g2"><div><label>Keyword</label><input type="text" name="keyword" required placeholder="work gloves"></div>
+<div><label>Company type</label><input type="text" name="company_type" placeholder="distributor"></div>
+<div><label>Country</label><input type="text" name="country" required placeholder="United States"></div>
+<div><label>City <span class="mute">(optional)</span></label><input type="text" name="city" placeholder="Chicago"></div></div>
+<label>Lead target</label><input type="number" name="target" value="100" min="1" max="5000">
+<p class="hint">The bot only reports real companies it finds. If sources run out it ends as “Completed with Shortfall”.</p>
+<p><button class="btn p">Queue search</button></p></form></div>
+<div class="card"><h2>Add customers yourself</h2>
+<div class="row"><a class="btn" href="{{ url_for('main.customers', cid=c.id) }}#add">Add manually</a><a class="btn" href="{{ url_for('main.customers', cid=c.id) }}#upload">Upload CSV / Excel</a></div>
+<form method="post" action="{{ url_for('main.enrich_queue', cid=c.id) }}" style="margin-top:14px">{{ m.csrf() }}
+<button class="btn">Find missing emails from websites</button>{% if pending_enrich %}<span class="mute small"> {{ pending_enrich }} in the queue…</span>{% endif %}</form>
+<details style="margin-top:16px"><summary>Website sign-up form (collect subscribers)</summary>
+<p class="small">Link or embed this form on your website. People who tick consent are added to this campaign.</p>
+<input type="text" readonly value="{{ embed }}" onclick="this.select()">
+<p class="hint">Embed: <span class="mono">&lt;iframe src="{{ embed }}" width="100%" height="420" style="border:0"&gt;&lt;/iframe&gt;</span></p></details></div></div>
+
+<div class="card"><h2>Searches</h2>{% if jobs %}<div class="tw"><table><tr><th>Search</th><th>Status</th><th>New</th><th>Duplicates</th><th>Excluded</th><th>Target</th><th></th></tr>
+{% for j in jobs %}<tr><td><a href="{{ url_for('main.job_view', jid=j.id) }}">{{ j.keyword }}</a> <span class="mute small">{{ j.city }} {{ j.country }}</span></td><td>{{ m.rstatus(j.status) }}</td>
+<td>{{ j.found }}</td><td>{{ j.duplicates }}</td><td>{{ j.excluded_skipped }}</td><td>{{ j.target }}</td>
+<td class="row">{% if j.status=='Queued' %}<form method="post" action="{{ url_for('main.job_run', jid=j.id) }}">{{ m.csrf() }}<button class="btn s">Run now</button></form>{% endif %}
+{% if j.status in ('Queued','Running') %}<form method="post" action="{{ url_for('main.job_cancel', jid=j.id) }}">{{ m.csrf() }}<button class="btn s d">Cancel</button></form>{% endif %}</td></tr>
+{% if j.message %}<tr><td colspan="7" class="mute small">{{ j.message }}</td></tr>{% endif %}{% endfor %}</table></div>
+{% else %}<div class="empty">No searches yet.</div>{% endif %}</div>
+{% if me.role!='researcher' %}<form method="post" action="{{ url_for('main.campaign_delete', cid=c.id) }}" data-confirm="Delete this campaign and all its customers?">{{ m.csrf() }}<button class="btn s d">Delete campaign</button></form>{% endif %}
+{% endblock %}

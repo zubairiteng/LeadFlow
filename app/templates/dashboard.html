@@ -1,0 +1,23 @@
+{% extends 'base.html' %}{% import '_m.html' as m with context %}{% block title %}Dashboard{% endblock %}{% block body %}
+<div class="row sp"><div><h1>Dashboard</h1><p class="sub">Everything about your lead generation in one place.</p></div>
+<a class="btn p" href="{{ url_for('main.campaigns') }}">+ New campaign</a></div>
+{% for text, link in warnings %}<div class="warn">{{ text }}{% if link %} <a href="{{ link }}">Fix this</a>{% endif %}</div>{% endfor %}
+<div class="grid g4" style="margin-bottom:18px">
+<div class="stat"><div class="n">{{ stats.customers }}</div><div class="l">Customers saved</div></div>
+<div class="stat"><div class="n">{{ stats.hot }}</div><div class="l">Hot leads</div></div>
+<div class="stat"><div class="n">{{ stats.with_email }}</div><div class="l">With a usable email</div></div>
+<div class="stat"><div class="n">{{ stats.open_replies }}</div><div class="l">Replies waiting for you</div></div>
+<div class="stat"><div class="n">{{ stats.sent_today }}<span class="mute" style="font-size:16px"> / {{ stats.limit }}</span></div><div class="l">Emails sent today</div></div>
+<div class="stat"><div class="n">{{ stats.campaigns }}</div><div class="l">Campaigns</div></div>
+<div class="stat"><div class="n">{{ stats.dnc }}</div><div class="l">Do-not-contact</div></div>
+<div class="stat"><div class="n">{{ 'Demo' if org.email_mode=='demo' else ('Connected' if org.email_mode!='none' else 'Not set') }}</div><div class="l">Email status</div></div>
+</div>
+<div class="grid g2">
+<div class="card"><h2>Campaigns</h2>{% if summary %}<div class="tw"><table><tr><th>Name</th><th>Customers</th><th>Rounds</th><th>Sent</th><th>Replied</th></tr>
+{% for s in summary %}<tr><td><a href="{{ url_for('main.campaign', cid=s.c.id) }}">{{ s.c.name }}</a></td><td>{{ s.customers }}</td><td>{{ s.rounds }}</td><td>{{ s.sent }}</td><td>{{ s.replied }}</td></tr>{% endfor %}</table></div>
+{% else %}<div class="empty">No campaigns yet. <a href="{{ url_for('main.campaigns') }}">Create your first one.</a></div>{% endif %}</div>
+<div class="card"><h2>Needs reply</h2>{% if tasks %}<table>{% for t in tasks %}<tr><td><a href="{{ url_for('main.customer_view', cid=t.customer_id) }}"><b>{{ t.company_name }}</b></a><div class="mute small">{{ t.note[:110] }}</div></td><td class="small mute">{{ fmt(t.created_at,'%d %b') }}</td></tr>{% endfor %}</table>
+<p class="small"><a href="{{ url_for('main.tasks') }}">All replies →</a></p>{% else %}<div class="empty">No replies waiting.</div>{% endif %}</div></div>
+<div class="card"><h2>Recent activity</h2>{% if events %}<table>{% for e in events %}<tr><td style="width:130px"><span class="badge">{{ e.type }}</span></td><td>{{ e.company_name or '' }} <span class="mute small">{{ e.detail[:100] }}</span></td><td class="small mute" style="text-align:right">{{ fmt(e.created_at) }}</td></tr>{% endfor %}</table>
+{% else %}<div class="empty">Activity appears here once you start sending.</div>{% endif %}</div>
+{% endblock %}

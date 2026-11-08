@@ -1,0 +1,11 @@
+{% extends 'base.html' %}{% block title %}Sign up{% endblock %}{% block body %}
+<div class="brand" style="color:var(--ink);justify-content:center;font-size:22px"><i></i> LeadFlow</div>
+<div class="card"><h2>Create your account</h2>{% import '_m.html' as m with context %}
+<form method="post">{{ m.csrf() }}
+<label>Company name</label><input type="text" name="company" value="{{ form.get('company','') }}" required>
+<label>Your name</label><input type="text" name="name" value="{{ form.get('name','') }}" required>
+<label>Email</label><input type="email" name="email" value="{{ form.get('email','') }}" required>
+<label>Password <span class="mute">(min 8 characters)</span></label><input type="password" name="password" minlength="8" required autocomplete="new-password">
+<p><button class="btn p" style="width:100%">Create account</button></p></form></div>
+<p class="mute small" style="text-align:center">Already registered? <a href="{{ url_for('main.login') }}">Log in</a></p>
+{% endblock %}

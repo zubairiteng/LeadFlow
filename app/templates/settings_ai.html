@@ -1,0 +1,8 @@
+{% extends 'base.html' %}{% import '_m.html' as m with context %}{% block title %}AI settings{% endblock %}{% block body %}
+<h1>AI key</h1><p class="sub">Optional. Used only to draft email text. AI never decides who is Hot or Cold. The key is stored encrypted and shown masked.</p>
+<div class="card" style="max-width:560px"><form method="post">{{ m.csrf() }}
+<label>Provider</label><select name="provider">{% for k,v in providers.items() %}<option value="{{ k }}" {{ 'selected' if org.ai_provider==k }}>{{ v.label }}</option>{% endfor %}</select>
+<label>Model <span class="mute">(leave blank for default)</span></label><input type="text" name="model" value="{{ org.ai_model }}" placeholder="e.g. gemini-2.0-flash">
+<label>API key</label><input type="password" name="key" placeholder="{{ masked or 'Paste your key' }}" autocomplete="off">
+<p class="hint">{% if masked %}Saved key: {{ masked }}. Leave empty to keep it.{% endif %} Free Gemini key: aistudio.google.com/apikey</p>
+<div class="row"><button class="btn p" name="action" value="save">Save</button><button class="btn" name="action" value="test">Save and test</button>{% if masked %}<button class="btn d" name="action" value="remove">Remove key</button>{% endif %}</div></form></div>{% endblock %}

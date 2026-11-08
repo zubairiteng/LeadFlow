@@ -1,0 +1,8 @@
+{% extends 'base.html' %}{% import '_m.html' as m with context %}{% block title %}Search{% endblock %}{% block body %}
+<p><a href="{{ url_for('main.campaign', cid=c.id) }}">← {{ c.name }}</a></p>
+<h1>Search: {{ j.keyword }}</h1><p class="sub">{{ j.city }} {{ j.country }} · {{ j.company_type }} · target {{ j.target }}</p>
+<div class="grid g4" style="margin-bottom:18px"><div class="stat"><div class="n">{{ m.rstatus(j.status) }}</div><div class="l">Status</div></div>
+<div class="stat"><div class="n">{{ j.found }}</div><div class="l">New customers</div></div><div class="stat"><div class="n">{{ j.duplicates }}</div><div class="l">Duplicates</div></div>
+<div class="stat"><div class="n">{{ j.excluded_skipped }}</div><div class="l">Skipped (excluded)</div></div></div>
+{% if j.message %}<div class="card">{{ j.message }}</div>{% endif %}
+<div class="card"><h2>Log</h2><pre class="log">{{ j.log or 'Nothing yet.' }}</pre></div>{% endblock %}

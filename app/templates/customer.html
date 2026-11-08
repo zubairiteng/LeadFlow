@@ -1,0 +1,16 @@
+{% extends 'base.html' %}{% import '_m.html' as m with context %}{% block title %}{{ c.company_name }}{% endblock %}{% block body %}
+{% if c.campaign_id %}<p><a href="{{ url_for('main.customers', cid=c.campaign_id) }}">← Customer list</a></p>{% endif %}
+<div class="row sp"><div><h1>{{ c.company_name }}</h1><p class="sub">{{ c.domain or 'no website' }} · {{ m.grade(c.grade) }} score {{ c.score }} {% if c.excluded %}<span class="badge b-bad">Excluded</span>{% endif %}{% if dnc %} <span class="badge b-bad">Do-not-contact</span>{% endif %}</p></div></div>
+<div class="grid g2" style="align-items:start">
+<div class="card"><h2>Details</h2><form method="post">{{ m.csrf() }}
+<label>Company name</label><input type="text" name="company_name" value="{{ c.company_name }}" required>
+<div class="grid g2"><div><label>Website</label><input type="text" name="website" value="{{ c.website }}"></div><div><label>Email {{ m.estatus(c.email_status) }}</label><input type="email" name="email" value="{{ c.email }}"></div>
+<div><label>Phone</label><input type="text" name="phone" value="{{ c.phone }}"></div><div><label>Contact name</label><input type="text" name="contact_name" value="{{ c.contact_name }}"></div>
+<div><label>Country</label><input type="text" name="country" value="{{ c.country }}"></div><div><label>City</label><input type="text" name="city" value="{{ c.city }}"></div></div>
+{% if c.extra_emails %}<p class="hint">Other emails found: {{ c.extra_emails }}</p>{% endif %}
+<p class="hint">Source: {{ c.source }} · added {{ fmt(c.created_at) }}</p><p><button class="btn p">Save</button></p></form></div>
+<div><div class="card"><h2>Why this score</h2><table>{% for k,v in parts.items() %}<tr><td>{{ k }}</td><td style="text-align:right"><b>{{ v }}</b></td></tr>{% endfor %}<tr><td><b>Total</b></td><td style="text-align:right"><b>{{ c.score }}</b></td></tr></table>
+<p class="hint">Fixed rules, not AI: Hot ≥ 75, Warm 50–74, Cold &lt; 50.</p></div>
+<div class="card"><h2>Rounds</h2>{% if recs %}<table>{% for r in recs %}<tr><td><a href="{{ url_for('main.round_view', rid=r.round_id) }}">{{ r.name or ('Round '~r.number) }}</a></td><td>{{ m.rstatus(r.status) }}</td><td class="small mute">{{ r.steps_sent }} email(s)</td></tr>{% endfor %}</table>{% else %}<div class="empty">Not in any round.</div>{% endif %}</div></div></div>
+<div class="card"><h2>History</h2>{% if events %}<table>{% for e in events %}<tr><td style="width:130px"><span class="badge">{{ e.type }}</span></td><td>{{ e.detail }}</td><td class="small mute" style="text-align:right">{{ fmt(e.created_at) }}</td></tr>{% endfor %}</table>{% else %}<div class="empty">No history yet.</div>{% endif %}</div>
+{% endblock %}

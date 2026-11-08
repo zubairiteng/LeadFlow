@@ -1,0 +1,45 @@
+{% extends 'base.html' %}{% import '_m.html' as m with context %}{% block title %}{{ rd.name or ('Round '~rd.number) }}{% endblock %}{% block body %}
+<p><a href="{{ url_for('main.campaign', cid=c.id) }}">← {{ c.name }}</a></p>
+<div class="row sp"><div><h1>{{ rd.name or ('Round '~rd.number) }} {{ m.rstatus(rd.status) }}</h1>
+<p class="sub">Today: {{ today_sent }} sent for this round · org limit {{ limit }}/day{% if rd.approved_at %} · approved {{ fmt(rd.approved_at) }}{% endif %}</p></div>
+<div class="row">{% if me.role!='researcher' %}
+{% if rd.status in ('Approved','Sending') %}<form method="post" action="{{ url_for('main.round_pause', rid=rd.id) }}">{{ m.csrf() }}<button class="btn">Pause</button></form>{% endif %}
+{% if rd.status=='Paused' %}<form method="post" action="{{ url_for('main.round_resume', rid=rd.id) }}">{{ m.csrf() }}<button class="btn p">Resume</button></form>{% endif %}
+{% if rd.status=='Draft' %}<form method="post" action="{{ url_for('main.round_delete', rid=rd.id) }}" data-confirm="Delete this draft?">{{ m.csrf() }}<button class="btn d">Delete draft</button></form>{% endif %}{% endif %}
+<a class="btn" href="{{ url_for('main.round_export', rid=rd.id) }}">Export CSV</a></div></div>
+
+<div class="grid g4" style="margin-bottom:18px">
+{% for k,l in [('selected','Selected'),('sent','Sent'),('bounced','Bounced'),('replied','Replied'),('ignored','Ignored'),('unsubscribed','Unsubscribed'),('pending','Waiting to send'),('reply_rate','Reply rate')] %}
+<div class="stat"><div class="n">{{ stats[k] }}{{ '%' if k=='reply_rate' }}</div><div class="l">{{ l }}</div></div>{% endfor %}</div>
+
+{% if rd.status=='Draft' and me.role!='researcher' %}
+<div class="card" style="border-color:var(--brand)"><h2>Approval gate</h2>
+<p class="small">Final count: <b>{{ stats.pending }}</b> customers will be emailed. {% if recent_count %}<span class="badge b-warn">{{ recent_count }} were emailed in the last 14 days</span>{% endif %}</p>
+{% if removal %}<p class="hint">Removed automatically: {% for k,v in removal.items() %}{% if v %}{{ k }} ({{ v }}) · {% endif %}{% endfor %}</p>{% endif %}
+<div class="row"><form method="post" action="{{ url_for('main.round_test', rid=rd.id) }}" class="row">{{ m.csrf() }}<input type="email" name="to" value="{{ me.email }}" style="width:260px"><button class="btn">Send test email</button></form>
+<form method="post" action="{{ url_for('main.round_approve', rid=rd.id) }}" data-confirm="Approve? The email text will be frozen and sending starts automatically.">{{ m.csrf() }}<button class="btn p" {{ 'disabled' if not tested }}>Approve and start</button></form></div>
+<p class="hint">{% if tested %}✔ Test sent for the current text.{% else %}Send a test email of the current text before you can approve.{% endif %} Without approval nothing is ever sent.</p></div>{% endif %}
+
+<div class="grid g2" style="align-items:start">
+<div class="card"><h2>Email {% if not editable %}<span class="badge b-mute">frozen</span>{% endif %}</h2>
+{% if editable and me.role!='researcher' %}<form method="post" action="{{ url_for('main.round_edit', rid=rd.id) }}">{{ m.csrf() }}{% set f = rdd %}{% include '_round_form.html' %}<p><button class="btn p">Save changes</button></p></form>
+{% else %}<div class="small mute">Subject</div><p><b>{{ rd.subject }}</b></p><div class="small mute">Text</div><pre class="log">{{ rd.body }}</pre>
+<div class="small mute">Follow-ups (days {{ fu_days|join(', ') or 'none' }})</div>{% for b in fu_bodies %}<pre class="log" style="max-height:110px">{{ b }}</pre>{% endfor %}
+{% if me.role!='researcher' and rd.status!='Finished' %}<form method="post" action="{{ url_for('main.round_settings', rid=rd.id) }}" class="row">{{ m.csrf() }}<label class="mute small" style="margin:0">Round daily limit</label><input type="number" name="daily_limit" value="{{ rd.daily_limit or '' }}" min="1" max="100" style="width:90px"><button class="btn s">Update</button></form>{% endif %}{% endif %}</div>
+
+<div class="card"><h2>Add customers</h2><p class="hint">Add more customers any time, before or after the round starts. Unsubscribed, bounced, replied and excluded customers can never be added.</p>
+{% if me.role!='researcher' and rd.status!='Finished' %}<form method="post" action="{{ url_for('main.recipients_add_matching', rid=rd.id) }}">{{ m.csrf() }}<button class="btn">Add all newly matching customers</button></form>
+{% if picker %}<form method="post" action="{{ url_for('main.recipients_add', rid=rd.id) }}" style="margin-top:12px">{{ m.csrf() }}
+<div style="max-height:280px;overflow:auto;border:1px solid var(--line);border-radius:9px;padding:6px 10px">{% for x in picker %}<label class="chk" style="padding:3px 0"><input type="checkbox" name="customer_ids" value="{{ x.id }}"> {{ x.company_name }} <span class="mute small">{{ x.email }}</span> {{ m.grade(x.grade) }}</label>{% endfor %}</div>
+<p><button class="btn p">Add selected</button></p></form>{% else %}<p class="mute small" style="margin-top:12px">No other eligible customers in this campaign.</p>{% endif %}{% endif %}</div></div>
+
+<div class="card"><div class="row sp"><h2>Customers in this round ({{ total }})</h2>
+<form method="get" class="row"><select name="status" style="width:auto" onchange="this.form.submit()"><option value="">All statuses</option>{% for s in statuses %}<option {{ 'selected' if status==s }}>{{ s }}</option>{% endfor %}</select></form></div>
+{% if rows %}<div class="tw"><table><tr><th>Customer</th><th>Grade</th><th>Status</th><th>Emails</th><th>Last email</th><th></th></tr>
+{% for r in rows %}<tr><td><a href="{{ url_for('main.customer_view', cid=r.customer_id) }}"><b>{{ r.company_name }}</b></a><div class="mute small">{{ r.email }}</div></td><td>{{ m.grade(r.grade) }}</td>
+<td>{{ m.rstatus(r.status) }}{% if r.note %}<div class="mute small">{{ r.note }}</div>{% endif %}</td><td>{{ r.steps_sent }}/{{ 1+fu_days|length }}</td><td class="small">{{ fmt(r.last_sent_at) }}</td>
+<td><div class="row">{% if r.status in ('Pending','Sent') %}<form method="post" action="{{ url_for('main.recipient_skip', rid=rd.id, recid=r.id) }}" title="Stays in your list, skipped only in this round">{{ m.csrf() }}<button class="btn s">Remove from round</button></form>{% endif %}
+{% if r.status=='Skipped' and r.note=='Removed from this round' %}<form method="post" action="{{ url_for('main.recipient_unskip', rid=rd.id, recid=r.id) }}">{{ m.csrf() }}<button class="btn s">Put back</button></form>{% endif %}
+{% if demo and me.role!='researcher' and r.first_message_id and r.status in ('Sent','Pending') %}<form method="post" action="{{ url_for('main.recipient_simulate', rid=rd.id, recid=r.id) }}" class="row">{{ m.csrf() }}<select name="kind" style="width:auto;padding:3px 6px"><option value="reply">Reply</option><option value="auto">Out of office</option><option value="bounce">Bounce</option><option value="unsub">Unsubscribe</option></select><button class="btn s">Simulate</button></form>{% endif %}</div></td></tr>{% endfor %}</table></div>
+{{ m.pager(page,pages,request.args) }}{% else %}<div class="empty">No customers in this round yet.</div>{% endif %}</div>
+{% endblock %}

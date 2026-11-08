@@ -1,0 +1,4 @@
+{% extends 'base.html' %}{% import '_m.html' as m with context %}{% block title %}Excluded{% endblock %}{% block body %}
+<h1>Excluded list</h1><p class="sub">Customers you removed permanently. The Discovery Bot, manual add and uploads will never add them again. You can undo any removal.</p>
+<div class="card tw">{% if rows %}<table><tr><th>Company / domain</th><th>Excluded on</th><th></th></tr>{% for r in rows %}<tr><td><b>{{ r.company_name }}</b><div class="mute small">{{ r.dedup_key }}</div></td><td>{{ fmt(r.created_at) }}</td>
+<td><form method="post" action="{{ url_for('main.excluded_restore', eid=r.id) }}">{{ m.csrf() }}<button class="btn s">Restore</button></form></td></tr>{% endfor %}</table>{% else %}<div class="empty">Nothing excluded.</div>{% endif %}</div>{% endblock %}
