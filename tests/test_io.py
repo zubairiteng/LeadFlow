@@ -154,7 +154,11 @@ def test_yellowpages_and_websearch_parsing():
 
 
 def test_gemini_search_connector_and_parsing():
-    from app.services.ai import _parse_companies_json
+    from app.services.ai import _parse_companies_json, normalize_model
+    assert normalize_model("gemini", "gemini-3.8-flash") == "gemini-2.0-flash"
+    assert normalize_model("gemini", "gen-lang-client-0393955013") == "gemini-2.0-flash"
+    assert normalize_model("gemini", "") == "gemini-2.0-flash"
+    assert normalize_model("gemini", "gemini-1.5-flash") == "gemini-1.5-flash"
     raw_ai = '''Here are the companies:
     ```json
     [

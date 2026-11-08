@@ -19,10 +19,11 @@ class AIError(Exception):
 
 
 def normalize_model(provider: str, model: str = "") -> str:
-    """Ensure a valid model name is used; sanitize Google Cloud project IDs if mistakenly entered."""
+    """Ensure a valid model name is used; sanitize Google Cloud project IDs or invalid names if mistakenly entered."""
     m = (model or "").strip()
     if provider == "gemini":
-        if not m or "gen-lang-client" in m or not m.startswith("gemini"):
+        valid_gemini = {"gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.5-flash"}
+        if m not in valid_gemini:
             return "gemini-2.0-flash"
     elif provider == "claude":
         if not m or not m.startswith("claude"):
@@ -38,14 +39,14 @@ def _complete(provider: str, model: str, key: str, prompt: str, max_tokens: int 
     try:
         if provider == "gemini":
             r = requests.post(f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
-                              headers={"x-goog-api-key": key, "Content-Type": "application/json"}, timeout=60,
+                              headers={"x-goog-api-key": key, "Content-Type": "application/json"}, timeout=30,
                               json={"contents": [{"parts": [{"text": prompt}]}],
                                     "generationConfig": {"maxOutputTokens": max_tokens}})
             if r.status_code != 200:
                 raise AIError(f"Gemini error {r.status_code}: {r.text[:200]}")
             return r.json()["candidates"][0]["content"]["parts"][0]["text"]
         if provider == "claude":
-            r = requests.post("https://api.anthropic.com/v1/messages", timeout=60,
+            r = requests.post("https://api.anthropic.com/v1/messages", timeout=30,
                               headers={"x-api-key": key, "anthropic-version": "2023-06-01"},
                               json={"model": model, "max_tokens": max_tokens,
                                     "messages": [{"role": "user", "content": prompt}]})
@@ -53,13 +54,15 @@ def _complete(provider: str, model: str, key: str, prompt: str, max_tokens: int 
                 raise AIError(f"Claude error {r.status_code}: {r.text[:200]}")
             return r.json()["content"][0]["text"]
         if provider == "openai":
-            r = requests.post("https://api.openai.com/v1/chat/completions", timeout=60,
+            r = requests.post("https://api.openai.com/v1/chat/completions", timeout=30,
                               headers={"Authorization": f"Bearer {key}"},
                               json={"model": model, "max_tokens": max_tokens,
                                     "messages": [{"role": "user", "content": prompt}]})
             if r.status_code != 200:
                 raise AIError(f"OpenAI error {r.status_code}: {r.text[:200]}")
             return r.json()["choices"][0]["message"]["content"]
+    except requests.exceptions.Timeout:
+        raise AIError(f"Connection to {provider} timed out. Please try again.")
     except requests.RequestException as e:
         raise AIError(f"Network error: {e}") from e
     except (KeyError, IndexError, ValueError) as e:
