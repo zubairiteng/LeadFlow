@@ -17,13 +17,22 @@
 
 <div class="grid g2" style="align-items:start">
 <div class="card"><h2>Find customers (Discovery Bot)</h2>
+{% if not has_ai_key %}
+<div style="background:#fff3cd;color:#856404;padding:11px 14px;border-radius:6px;margin-bottom:14px;font-size:13px;border:1px solid #ffeeba;line-height:1.5">
+  ⚠️ <b>Gemini API key required:</b> To find real businesses with live Google Search, please add your free Gemini key in <a href="{{ url_for('main.settings_ai') }}" style="color:#533f03;font-weight:bold;text-decoration:underline;">Settings &gt; AI key</a> first.
+</div>
+{% else %}
+<div style="background:#e6fcf5;color:#0ca678;padding:9px 12px;border-radius:6px;margin-bottom:12px;font-size:12px;border:1px solid #c3fae8;">
+  ✨ <b>Google Gemini (Live Search) Active:</b> Real verified businesses and websites will be discovered via live Google Search.
+</div>
+{% endif %}
 <form method="post" action="{{ url_for('main.search_create', cid=c.id) }}">{{ m.csrf() }}
 <div class="grid g2"><div><label>Keyword</label><input type="text" name="keyword" required placeholder="work gloves"></div>
 <div><label>Company type</label><input type="text" name="company_type" placeholder="distributor"></div>
 <div><label>Country</label><input type="text" name="country" required placeholder="United States"></div>
 <div><label>City <span class="mute">(optional)</span></label><input type="text" name="city" placeholder="Chicago"></div></div>
 <label>Lead target</label><input type="number" name="target" value="100" min="1" max="5000">
-<p class="hint">The bot only reports real companies it finds. If sources run out it ends as “Completed with Shortfall”.</p>
+<p class="hint">Discovery Bot uses Google Gemini with live Google Search to discover authentic active companies and their websites.</p>
 <p><button class="btn p">Queue search</button></p></form></div>
 <div class="card"><h2>Add customers yourself</h2>
 <div class="row"><a class="btn" href="{{ url_for('main.customers', cid=c.id) }}#add">Add manually</a><a class="btn" href="{{ url_for('main.customers', cid=c.id) }}#upload">Upload CSV / Excel</a></div>

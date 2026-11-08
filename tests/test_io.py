@@ -153,6 +153,37 @@ def test_yellowpages_and_websearch_parsing():
     assert len(out) == 1 and out[0].name == "GlovePro" and out[0].website == "glovepro.com" and out[0].description == "We sell gloves"
 
 
+def test_gemini_search_connector_and_parsing():
+    from app.services.ai import _parse_companies_json
+    raw_ai = '''Here are the companies:
+    ```json
+    [
+        {"name": "Pak Gloves Co", "website": "https://pakgloves.com", "email": "info@pakgloves.com", "phone": "+92 55 12345", "city": "Gujranwala", "country": "Pakistan", "description": "Leather work gloves exporter"},
+        {"name": "No Site Co", "website": ""}
+    ]
+    ```'''
+    res = _parse_companies_json(raw_ai, "Pakistan", "Gujranwala")
+    assert len(res) == 1
+    assert res[0]["name"] == "Pak Gloves Co"
+    assert res[0]["website"] == "https://pakgloves.com"
+    assert res[0]["city"] == "Gujranwala"
+
+    from app.services.discovery import GeminiSearch
+    org = {"id": 1, "ai_provider": "gemini", "ai_model": "gemini-2.0-flash", "ai_key_enc": crypto.encrypt("fake-key")}
+    c = GeminiSearch(org)
+    assert c.applies({"keyword": "gloves", "country": "Pakistan"})
+    assert not GeminiSearch({"ai_key_enc": ""}).applies({"keyword": "gloves", "country": "Pakistan"})
+    assert not GeminiSearch(None).applies({"keyword": "gloves", "country": "Pakistan"})
+
+    with mock.patch("app.services.ai.search_leads_with_ai", return_value=[{"name": "Pak Gloves", "website": "pakgloves.com", "email": "a@pak.com", "phone": "1", "city": "G", "country": "P", "description": "D"}]):
+        page0 = c.fetch_page({"keyword": "gloves", "country": "Pakistan", "city": "G", "company_type": "M", "target": 10}, 0, None)
+        assert len(page0) == 1
+        assert page0[0].name == "Pak Gloves"
+        assert page0[0].source == "Google Gemini (Live Search)"
+        page1 = c.fetch_page({"keyword": "gloves", "country": "Pakistan", "city": "G", "company_type": "M", "target": 10}, 1, None)
+        assert page1 is None
+
+
 # ---------------------------------------------------------------- transports
 class FakeSMTP(threading.Thread):
     """Minimal SMTP server for tests (no auth, no TLS)."""

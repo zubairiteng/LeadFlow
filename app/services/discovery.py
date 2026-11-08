@@ -45,6 +45,53 @@ class Connector:
         raise NotImplementedError
 
 
+# ------------------------------------------------ Google Gemini (Live Search)
+class GeminiSearch(Connector):
+    name = "Google Gemini (Live Search)"
+    max_pages = 1
+
+    def __init__(self, org=None):
+        self.org = org
+
+    def applies(self, job) -> bool:
+        return bool(self.org and self.org["ai_key_enc"])
+
+    def fetch_page(self, job, page, fetcher):
+        if page > 0 or not self.org or not self.org["ai_key_enc"]:
+            return None
+        from . import ai
+        try:
+            city_val = job["city"] if "city" in job.keys() else ""
+            type_val = job["company_type"] if "company_type" in job.keys() else ""
+            target_val = job["target"] if "target" in job.keys() else 20
+            items = ai.search_leads_with_ai(
+                self.org,
+                keyword=job["keyword"],
+                country=job["country"],
+                city=city_val or "",
+                company_type=type_val or "",
+                target=target_val
+            )
+            out = []
+            for item in items:
+                site = clean_domain(item.get("website", "")) or item.get("website", "")
+                if not site or not item.get("name"):
+                    continue
+                out.append(Company(
+                    name=item["name"],
+                    website=site,
+                    email=normalize_email(item.get("email", "")),
+                    phone=item.get("phone", ""),
+                    country=item.get("country", job["country"]),
+                    city=item.get("city", city_val),
+                    description=item.get("description", ""),
+                    source=self.name
+                ))
+            return out if out else None
+        except Exception:
+            return None
+
+
 # --------------------------------------------------------------- OpenStreetMap
 class OpenStreetMap(Connector):
     name = "OpenStreetMap"
@@ -159,8 +206,17 @@ class WebSearch(Connector):
         return out
 
 
-def default_connectors() -> list[Connector]:
-    return [OpenStreetMap(), YellowPagesUS(), WebSearch()]
+def default_connectors(db=None, org_id: int | None = None) -> list[Connector]:
+    conns: list[Connector] = []
+    if db and org_id:
+        try:
+            org = db.one("SELECT * FROM orgs WHERE id=?", (org_id,))
+            if org and org["ai_key_enc"]:
+                conns.append(GeminiSearch(org=org))
+        except Exception:
+            pass
+    conns.extend([OpenStreetMap(), YellowPagesUS(), WebSearch()])
+    return conns
 
 
 # --------------------------------------------------------------------- runner
@@ -181,11 +237,11 @@ def recover_stuck(db) -> None:
 
 
 def run_job(db, job_id: int, fetcher: Fetcher, connectors: list[Connector] | None = None) -> str:
-    connectors = connectors if connectors is not None else default_connectors()
     job = db.one("SELECT * FROM search_jobs WHERE id=?", (job_id,))
     if not job or job["status"] not in ("Queued", "Running"):
         return job["status"] if job else "Missing"
     org_id, camp = job["org_id"], job["campaign_id"]
+    connectors = connectors if connectors is not None else default_connectors(db, org_id)
     db.x("UPDATE search_jobs SET status='Running', started_at=COALESCE(started_at,?) WHERE id=?",
          (utils.now(), job_id))
     prog = json.loads(job["progress"] or "{}")

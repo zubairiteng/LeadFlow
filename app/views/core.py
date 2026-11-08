@@ -194,8 +194,10 @@ def campaign(cid):
                        "AND email_status<>'Invalid'", (cid,))["c"]
     pending_enrich = d.one("SELECT COUNT(*) c FROM customers WHERE campaign_id=? AND enrich_state='pending'", (cid,))["c"]
     embed = f"{current_app.config['BASE_URL'].rstrip('/')}/subscribe/{g.org['public_key']}/{cid}"
+    has_ai_key = bool(g.org["ai_key_enc"]) if g.org else False
     return render_template("campaign.html", c=c, jobs=jobs, rounds=rounds, grades=grades, total=total,
-                           with_email=with_email, pending_enrich=pending_enrich, embed=embed)
+                           with_email=with_email, pending_enrich=pending_enrich, embed=embed,
+                           has_ai_key=has_ai_key)
 
 
 @bp.post("/campaigns/<int:cid>/delete")
@@ -227,6 +229,9 @@ def search_create(cid):
         errs.append("Country is required.")
     if not 1 <= target <= 5000:
         errs.append("Lead target must be between 1 and 5000.")
+    has_ai = bool(g.org["ai_key_enc"]) if g.org else False
+    if not has_ai and not current_app.config.get("TESTING"):
+        errs.append("Gemini API key is required to discover leads with live Google Search. Please add your free key in Settings > AI key first.")
     if errs:
         flash_all(errs)
         return redirect(url_for("main.campaign", cid=cid))
